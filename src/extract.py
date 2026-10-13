@@ -3,6 +3,7 @@ import csv
 import gzip
 from io import StringIO
 import boto3
+import duckdb
 from botocore import UNSIGNED
 from botocore.client import Config
 
@@ -67,6 +68,15 @@ def fetch_weather(station_id: str="ASN00002022") -> list[dict]:
     reader = csv.DictReader(StringIO(csv_text), fieldnames=WEATHER_COLUMNS)
     return list(reader)
 
+def read_local_csv(path: str) -> duckdb.DuckDBPyRelation:
+    """
+Read a CSV file with DuckDB. Column types are inferred automatically.
+
+    Args:
+        path (str): The path to the local CSV file.
+    """
+    return duckdb.read_csv(path)
+
 if __name__ == "__main__":
     pokemon = fetch_pokemon_list()
     print(f"Fetched {len(pokemon)} Pokémon:")
@@ -79,3 +89,12 @@ if __name__ == "__main__":
     weather = fetch_weather()
     print(f"Fetched {len(weather)} weather records:")
     print(weather[:2])
+    
+    orders = read_local_csv("data/orders.csv")
+    print(orders.columns)
+    print(orders.types)
+    orders.limit(5).show()
+    
+    # DuckDb can also query a file directly with plain SQL
+    
+    duckdb.sql("SELECT COUNT(*) AS total_orders FROM 'data/orders.csv'").show()
