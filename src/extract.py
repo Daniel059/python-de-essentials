@@ -1,4 +1,11 @@
 import requests
+import csv
+import gzip
+from io import StringIO
+import boto3
+from botocore import UNSIGNED
+from botocore.client import Config
+
 POKEAPI_URL = "https://pokeapi.co/api/v2/pokemon/"
 
 def fetch_pokemon_list(limit: int = 151) -> list[dict]:
@@ -37,6 +44,29 @@ def fetch_pokemon_details(limit: int = 151) -> list[dict]:
     )
     response.raise_for_status()
     return response.json()["data"]["pokemon"]
+
+NOAA_BUCKET = "noaa-ghcn-pds"
+WEATHER_COLUMNS = [
+    "id", "date", "element", "value",
+    "mflag", "qflag", "sflag", "obs_time"
+]
+
+def fetch_weather(station_id: str="ASN00002022") -> list[dict]:
+    """
+    Fetches weather data for a given station from NOAA's GHCN dataset.
+
+    Args:
+        station_id (str): The station ID to fetch data for. Default is "ASN00002022".
+    """
+    file_key = f"csv.gz/by_station/{station_id}.csv.gz"
+    s3_client = boto3.client("s3", config=Config(signature_version=UNSIGNED))
+    response = s3_client.get_object(Bucket=NOAA_BUCKET, Key=file_key)
+    compressed_data = response['Body'].read()
+
+    csv_text = gzip.decompress(compressed_data).decode('utf-8')
+    reader = csv.DictReader(StringIO(csv_text), fieldnames=WEATHER_COLUMNS)
+    return list(reader)
+
 if __name__ == "__main__":
     pokemon = fetch_pokemon_list()
     print(f"Fetched {len(pokemon)} Pokémon:")
@@ -45,3 +75,7 @@ if __name__ == "__main__":
     details = fetch_pokemon_details()
     print(f"Fetched details for {len(details)} Pokémon:")
     print(details[:2])
+    
+    weather = fetch_weather()
+    print(f"Fetched {len(weather)} weather records:")
+    print(weather[:2])
