@@ -22,7 +22,7 @@ def fetch_pokemon_list(limit: int = 151) -> list[dict]:
 POKEAPI_GRAPHQL_URL = "https://graphql.pokeapi.co/v1beta2"
 POKEMON_DETAILS_QUERY = """
     query PokemonDetails($limit: Int!) {
-  pokemon(limit: $limit, order_by: {id: asc}) {
+    pokemon(limit: $limit, order_by: {id: asc}) {
     id
     name
     base_experience
