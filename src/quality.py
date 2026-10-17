@@ -40,9 +40,10 @@ def print_report(table: str, results: list[tuple]) -> bool:
 
 
 if __name__ == "__main__":
+    table = sys.argv[1] if len(sys.argv) > 1 else "enriched_orders"
     con = duckdb.connect(DB_PATH, read_only=True)
-    results = run_checks(con,"enriched_orders",ORDER_CHECKS)
+    results = run_checks(con, table, ORDER_CHECKS)
     con.close()
-    
-    all_passed = print_report("enriched_orders", results)
+
+    all_passed = print_report(table, results)
     sys.exit(0 if all_passed else 1)
